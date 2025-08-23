@@ -1,9 +1,9 @@
 [build]
   command = "npm run build"
-  publish = "out"
+  publish = ".next"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20.11.1"
   NODE_ENV = "production"
 
 # Disable Git submodule checkout

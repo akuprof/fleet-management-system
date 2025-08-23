@@ -40,7 +40,14 @@ export default function TestConnectionPage() {
   ])
   const [isRunning, setIsRunning] = useState(false)
   const [currentUser, setCurrentUser] = useState<any>(null)
-  const supabase = createClient()
+  const [supabase, setSupabase] = useState<any>(null)
+
+  useEffect(() => {
+    // Only create Supabase client on the client side
+    if (typeof window !== 'undefined') {
+      setSupabase(createClient())
+    }
+  }, [])
 
   const updateTest = (index: number, status: 'success' | 'error', message: string) => {
     setTests(prev => prev.map((test, i) => 
@@ -49,6 +56,11 @@ export default function TestConnectionPage() {
   }
 
   const runTests = async () => {
+    if (!supabase) {
+      toast.error('Supabase client not initialized')
+      return
+    }
+
     setIsRunning(true)
     
     try {
@@ -192,9 +204,11 @@ export default function TestConnectionPage() {
   }
 
   useEffect(() => {
-    // Auto-run tests on page load
-    runTests()
-  }, [])
+    // Auto-run tests on page load only if Supabase client is ready
+    if (supabase) {
+      runTests()
+    }
+  }, [supabase])
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -256,7 +270,7 @@ export default function TestConnectionPage() {
       <div className="flex justify-center">
         <Button 
           onClick={runTests} 
-          disabled={isRunning}
+          disabled={isRunning || !supabase}
           size="lg"
         >
           {isRunning ? (

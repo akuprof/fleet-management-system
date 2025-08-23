@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { toast } from 'react-hot-toast'
+import { toast } from 'sonner'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { Database } from '@/lib/types/database'
 import { Badge } from '@/components/ui/badge'

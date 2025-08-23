@@ -2,9 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { toast } from 'react-hot-toast'
+import { toast } from 'sonner'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { Database } from '@/lib/types/database'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Plus, Search, Filter, Calendar } from 'lucide-react'
 
 // Type definitions
 type Trip = Database['public']['Tables']['trips']['Row'] & {
@@ -13,26 +20,6 @@ type Trip = Database['public']['Tables']['trips']['Row'] & {
 }
 type Driver = Database['public']['Tables']['drivers']['Row']
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
-import {
-  Badge,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger
-} from '@/components/ui'
-import {
-  Input,
-  Label,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem
-} from '@/components/ui'
-import { Plus, Search, Filter, Calendar } from 'lucide-react'
 
 // Supabase client
 const supabase = createClient(

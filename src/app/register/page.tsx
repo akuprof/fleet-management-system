@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -18,11 +18,23 @@ export default function RegisterPage() {
   const [username, setUsername] = useState('')
   const [role, setRole] = useState('')
   const [loading, setLoading] = useState(false)
+  const [supabase, setSupabase] = useState<any>(null)
   const router = useRouter()
-  const supabase = createClient()
+
+  useEffect(() => {
+    // Only create Supabase client on the client side
+    if (typeof window !== 'undefined') {
+      setSupabase(createClient())
+    }
+  }, [])
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!supabase) {
+      toast.error('Supabase client not initialized')
+      return
+    }
+    
     setLoading(true)
 
     if (password !== confirmPassword) {
@@ -175,7 +187,7 @@ export default function RegisterPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={loading}
+              disabled={loading || !supabase}
             >
               {loading ? 'Creating account...' : 'Create account'}
             </Button>

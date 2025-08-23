@@ -26,9 +26,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const [supabase, setSupabase] = useState<any>(null)
+
+  useEffect(() => {
+    // Only create Supabase client on the client side
+    if (typeof window !== 'undefined') {
+      setSupabase(createClient())
+    }
+  }, [])
 
   const fetchProfile = async (userId: string) => {
+    if (!supabase) return
+    
     const { data: profile } = await supabase
       .from('user_profiles')
       .select(`
@@ -42,12 +51,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const refreshProfile = async () => {
-    if (user) {
+    if (user && supabase) {
       await fetchProfile(user.id)
     }
   }
 
   useEffect(() => {
+    if (!supabase) return
+
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
@@ -61,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
       setUser(session?.user ?? null)
       
       if (session?.user) {
@@ -77,7 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase])
 
   const signOut = async () => {
-    await supabase.auth.signOut()
+    if (supabase) {
+      await supabase.auth.signOut()
+    }
   }
 
   const value = {
