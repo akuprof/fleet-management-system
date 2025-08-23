@@ -1,12 +1,13 @@
 -- ========================================================
--- PLS Travels Fleet Management Schema (Supabase Compatible)
+-- PLS Travels Fleet Management Schema - Supabase Ready
 -- ========================================================
 
--- Note: auth.users table is managed by Supabase and already has RLS enabled
--- We don't need to modify it directly
+-- ========================
+-- Tables
+-- ========================
 
--- User & Auth
-CREATE TABLE roles (
+-- Roles
+CREATE TABLE IF NOT EXISTS roles (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
   permissions_json JSONB,
@@ -15,7 +16,8 @@ CREATE TABLE roles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE user_profiles (
+-- User Profiles
+CREATE TABLE IF NOT EXISTS user_profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   username TEXT,
@@ -26,7 +28,7 @@ CREATE TABLE user_profiles (
 );
 
 -- Drivers
-CREATE TABLE drivers (
+CREATE TABLE IF NOT EXISTS drivers (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   phone TEXT UNIQUE,
@@ -43,7 +45,7 @@ CREATE TABLE drivers (
 );
 
 -- Vehicles
-CREATE TABLE vehicles (
+CREATE TABLE IF NOT EXISTS vehicles (
   id BIGSERIAL PRIMARY KEY,
   registration_number TEXT UNIQUE NOT NULL,
   model TEXT,
@@ -63,7 +65,7 @@ CREATE TABLE vehicles (
 );
 
 -- Documents
-CREATE TABLE documents (
+CREATE TABLE IF NOT EXISTS documents (
   id BIGSERIAL PRIMARY KEY,
   entity_type TEXT CHECK (entity_type IN ('driver','vehicle')),
   entity_id BIGINT NOT NULL,
@@ -78,7 +80,7 @@ CREATE TABLE documents (
 );
 
 -- Assignments
-CREATE TABLE assignments (
+CREATE TABLE IF NOT EXISTS assignments (
   id BIGSERIAL PRIMARY KEY,
   driver_id BIGINT REFERENCES drivers(id),
   vehicle_id BIGINT REFERENCES vehicles(id),
@@ -92,7 +94,7 @@ CREATE TABLE assignments (
 );
 
 -- Shifts
-CREATE TABLE shifts (
+CREATE TABLE IF NOT EXISTS shifts (
   id BIGSERIAL PRIMARY KEY,
   driver_id BIGINT REFERENCES drivers(id),
   vehicle_id BIGINT REFERENCES vehicles(id),
@@ -108,8 +110,8 @@ CREATE TABLE shifts (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Trips (manual entry, no GPS)
-CREATE TABLE trips (
+-- Trips
+CREATE TABLE IF NOT EXISTS trips (
   id BIGSERIAL PRIMARY KEY,
   shift_id BIGINT REFERENCES shifts(id),
   driver_id BIGINT REFERENCES drivers(id),
@@ -129,7 +131,7 @@ CREATE TABLE trips (
 );
 
 -- Daily Summaries
-CREATE TABLE daily_summaries (
+CREATE TABLE IF NOT EXISTS daily_summaries (
   id BIGSERIAL PRIMARY KEY,
   driver_id BIGINT REFERENCES drivers(id),
   vehicle_id BIGINT REFERENCES vehicles(id),
@@ -149,7 +151,7 @@ CREATE TABLE daily_summaries (
 );
 
 -- Payouts
-CREATE TABLE payouts (
+CREATE TABLE IF NOT EXISTS payouts (
   id BIGSERIAL PRIMARY KEY,
   driver_id BIGINT REFERENCES drivers(id),
   payout_date DATE,
@@ -168,7 +170,7 @@ CREATE TABLE payouts (
 );
 
 -- Deductions
-CREATE TABLE deductions (
+CREATE TABLE IF NOT EXISTS deductions (
   id BIGSERIAL PRIMARY KEY,
   driver_id BIGINT REFERENCES drivers(id),
   incident_id BIGINT,
@@ -184,7 +186,7 @@ CREATE TABLE deductions (
 );
 
 -- Expenses
-CREATE TABLE expenses (
+CREATE TABLE IF NOT EXISTS expenses (
   id BIGSERIAL PRIMARY KEY,
   expense_type TEXT,
   driver_id BIGINT REFERENCES drivers(id),
@@ -201,7 +203,7 @@ CREATE TABLE expenses (
 );
 
 -- Incidents
-CREATE TABLE incidents (
+CREATE TABLE IF NOT EXISTS incidents (
   id BIGSERIAL PRIMARY KEY,
   driver_id BIGINT REFERENCES drivers(id),
   vehicle_id BIGINT REFERENCES vehicles(id),
@@ -223,8 +225,8 @@ CREATE TABLE incidents (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Incident deductions
-CREATE TABLE incident_deductions (
+-- Incident Deductions
+CREATE TABLE IF NOT EXISTS incident_deductions (
   id BIGSERIAL PRIMARY KEY,
   incident_id BIGINT REFERENCES incidents(id),
   deduction_amount NUMERIC,
@@ -235,230 +237,190 @@ CREATE TABLE incident_deductions (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Insert default roles
-INSERT INTO roles (name, description, permissions_json) VALUES
+-- Fuel Records
+CREATE TABLE IF NOT EXISTS fuel_records (
+  id BIGSERIAL PRIMARY KEY,
+  driver_id BIGINT REFERENCES drivers(id),
+  vehicle_id BIGINT REFERENCES vehicles(id),
+  fuel_date DATE,
+  amount NUMERIC,
+  liters NUMERIC,
+  price_per_liter NUMERIC,
+  total_cost NUMERIC,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Maintenance
+CREATE TABLE IF NOT EXISTS maintenance (
+  id BIGSERIAL PRIMARY KEY,
+  vehicle_id BIGINT REFERENCES vehicles(id),
+  maintenance_date DATE,
+  description TEXT,
+  cost NUMERIC,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ========================================================
+-- Default Roles
+-- ========================================================
+INSERT INTO roles (name, description, permissions_json)
+VALUES 
 ('admin', 'System Administrator', '{"all": true}'),
 ('manager', 'Fleet Manager', '{"manage_drivers": true, "manage_vehicles": true, "approve_payouts": true, "view_reports": true}'),
-('driver', 'Driver', '{"log_trips": true, "view_own_data": true, "upload_documents": true}');
+('driver', 'Driver', '{"log_trips": true, "view_own_data": true, "upload_documents": true}')
+ON CONFLICT (name) DO NOTHING;
 
+-- ========================================================
 -- Row Level Security Policies
+-- ========================================================
 
--- User profiles
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on all tables
+DO $$
+DECLARE t RECORD;
+BEGIN
+  FOR t IN
+    SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+  LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY;', t.tablename);
+  END LOOP;
+END $$;
 
-CREATE POLICY "Users can view their own profile" ON user_profiles
-  FOR SELECT USING (user_id = auth.uid());
+-- Roles - everyone can read
+CREATE POLICY "Everyone can view roles" ON roles FOR SELECT USING (true);
 
-CREATE POLICY "Users can update their own profile" ON user_profiles
-  FOR UPDATE USING (user_id = auth.uid());
+-- User Profiles - users manage own
+CREATE POLICY "Users manage their profile" ON user_profiles
+  FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
--- Drivers
-ALTER TABLE drivers ENABLE ROW LEVEL SECURITY;
+-- Drivers - admin/manager full, driver own
+CREATE POLICY "Admins/managers manage drivers" ON drivers
+  FOR ALL USING (EXISTS (
+    SELECT 1 FROM user_profiles up JOIN roles r ON up.role_id=r.id
+    WHERE up.user_id=auth.uid() AND r.name IN ('admin','manager')
+  ));
 
-CREATE POLICY "Admins and managers can view all drivers" ON drivers
+CREATE POLICY "Drivers manage own data" ON drivers
   FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles up 
-      JOIN roles r ON up.role_id = r.id 
-      WHERE up.user_id = auth.uid() 
-      AND r.name IN ('admin', 'manager')
-    )
+    phone IN (SELECT username FROM user_profiles WHERE user_id = auth.uid())
   );
 
-CREATE POLICY "Drivers can view their own data" ON drivers
-  FOR SELECT USING (
-    id IN (
-      SELECT d.id FROM drivers d
-      JOIN user_profiles up ON up.username = d.phone
-      WHERE up.user_id = auth.uid()
-    )
+-- Vehicles - admin/manager full
+CREATE POLICY "Admins/managers manage vehicles" ON vehicles
+  FOR ALL USING (EXISTS (
+    SELECT 1 FROM user_profiles up JOIN roles r ON up.role_id=r.id
+    WHERE up.user_id=auth.uid() AND r.name IN ('admin','manager')
+  ));
+
+-- Assignments - admin/manager full
+CREATE POLICY "Admins/managers manage assignments" ON assignments
+  FOR ALL USING (EXISTS (
+    SELECT 1 FROM user_profiles up JOIN roles r ON up.role_id=r.id
+    WHERE up.user_id=auth.uid() AND r.name IN ('admin','manager')
+  ));
+
+-- Trips - role-based
+CREATE POLICY "Admins/managers manage trips" ON trips
+  FOR ALL USING (EXISTS (
+    SELECT 1 FROM user_profiles up JOIN roles r ON up.role_id=r.id
+    WHERE up.user_id=auth.uid() AND r.name IN ('admin','manager')
+  ));
+
+CREATE POLICY "Drivers manage own trips" ON trips
+  FOR ALL USING (
+    driver_id IN (SELECT d.id FROM drivers d
+                  JOIN user_profiles up ON up.username=d.phone
+                  WHERE up.user_id=auth.uid())
   );
 
--- Vehicles
-ALTER TABLE vehicles ENABLE ROW LEVEL SECURITY;
+-- Daily Summaries
+CREATE POLICY "Admins/managers manage summaries" ON daily_summaries
+  FOR ALL USING (EXISTS (
+    SELECT 1 FROM user_profiles up JOIN roles r ON up.role_id=r.id
+    WHERE up.user_id=auth.uid() AND r.name IN ('admin','manager')
+  ));
 
-CREATE POLICY "Admins and managers can view all vehicles" ON vehicles
+CREATE POLICY "Drivers view own summaries" ON daily_summaries
   FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles up 
-      JOIN roles r ON up.role_id = r.id 
-      WHERE up.user_id = auth.uid() 
-      AND r.name IN ('admin', 'manager')
-    )
-  );
-
--- Trips
-ALTER TABLE trips ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view trips based on role" ON trips
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles up 
-      JOIN roles r ON up.role_id = r.id 
-      WHERE up.user_id = auth.uid() 
-      AND (
-        r.name IN ('admin', 'manager') OR
-        (r.name = 'driver' AND driver_id IN (
-          SELECT d.id FROM drivers d
-          JOIN user_profiles up2 ON up2.username = d.phone
-          WHERE up2.user_id = auth.uid()
-        ))
-      )
-    )
-  );
-
-CREATE POLICY "Drivers can insert their own trips" ON trips
-  FOR INSERT WITH CHECK (
-    driver_id IN (
-      SELECT d.id FROM drivers d
-      JOIN user_profiles up ON up.username = d.phone
-      WHERE up.user_id = auth.uid()
-    )
-  );
-
--- Daily summaries
-ALTER TABLE daily_summaries ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view summaries based on role" ON daily_summaries
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles up 
-      JOIN roles r ON up.role_id = r.id 
-      WHERE up.user_id = auth.uid() 
-      AND (
-        r.name IN ('admin', 'manager') OR
-        (r.name = 'driver' AND driver_id IN (
-          SELECT d.id FROM drivers d
-          JOIN user_profiles up2 ON up2.username = d.phone
-          WHERE up2.user_id = auth.uid()
-        ))
-      )
-    )
+    driver_id IN (SELECT d.id FROM drivers d
+                  JOIN user_profiles up ON up.username=d.phone
+                  WHERE up.user_id=auth.uid())
   );
 
 -- Payouts
-ALTER TABLE payouts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins/managers manage payouts" ON payouts
+  FOR ALL USING (EXISTS (
+    SELECT 1 FROM user_profiles up JOIN roles r ON up.role_id=r.id
+    WHERE up.user_id=auth.uid() AND r.name IN ('admin','manager')
+  ));
 
-CREATE POLICY "Users can view payouts based on role" ON payouts
+CREATE POLICY "Drivers view own payouts" ON payouts
   FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles up 
-      JOIN roles r ON up.role_id = r.id 
-      WHERE up.user_id = auth.uid() 
-      AND (
-        r.name IN ('admin', 'manager') OR
-        (r.name = 'driver' AND driver_id IN (
-          SELECT d.id FROM drivers d
-          JOIN user_profiles up2 ON up2.username = d.phone
-          WHERE up2.user_id = auth.uid()
-        ))
-      )
-    )
+    driver_id IN (SELECT d.id FROM drivers d
+                  JOIN user_profiles up ON up.username=d.phone
+                  WHERE up.user_id=auth.uid())
   );
 
--- Additional RLS policies for other tables
-ALTER TABLE assignments ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins and managers can manage assignments" ON assignments
+-- Incidents
+CREATE POLICY "Admins/managers manage incidents" ON incidents
+  FOR ALL USING (EXISTS (
+    SELECT 1 FROM user_profiles up JOIN roles r ON up.role_id=r.id
+    WHERE up.user_id=auth.uid() AND r.name IN ('admin','manager')
+  ));
+
+CREATE POLICY "Drivers manage/report own incidents" ON incidents
+  FOR ALL USING (
+    driver_id IN (SELECT d.id FROM drivers d
+                  JOIN user_profiles up ON up.username=d.phone
+                  WHERE up.user_id=auth.uid())
+    OR reported_by=auth.uid()
+  );
+
+-- Incident Deductions
+CREATE POLICY "Admins/managers manage incident deductions" ON incident_deductions
+  FOR ALL USING (EXISTS (
+    SELECT 1 FROM user_profiles up JOIN roles r ON up.role_id=r.id
+    WHERE up.user_id=auth.uid() AND r.name IN ('admin','manager')
+  ));
+
+-- Documents
+CREATE POLICY "Admins/managers manage documents" ON documents
+  FOR ALL USING (EXISTS (
+    SELECT 1 FROM user_profiles up JOIN roles r ON up.role_id=r.id
+    WHERE up.user_id=auth.uid() AND r.name IN ('admin','manager')
+  ));
+
+-- Fuel Records
+CREATE POLICY "Admins/managers manage fuel records" ON fuel_records
+  FOR ALL USING (EXISTS (
+    SELECT 1 FROM user_profiles up JOIN roles r ON up.role_id=r.id
+    WHERE up.user_id=auth.uid() AND r.name IN ('admin','manager')
+  ));
+
+CREATE POLICY "Drivers manage own fuel records" ON fuel_records
+  FOR ALL USING (
+    driver_id IN (SELECT d.id FROM drivers d
+                  JOIN user_profiles up ON up.username=d.phone
+                  WHERE up.user_id=auth.uid())
+  );
+
+-- Maintenance - Admins and managers can manage all
+CREATE POLICY "Admins and managers manage maintenance" ON maintenance
   FOR ALL USING (
     EXISTS (
-      SELECT 1 FROM user_profiles up 
-      JOIN roles r ON up.role_id = r.id 
-      WHERE up.user_id = auth.uid() 
-      AND r.name IN ('admin', 'manager')
+      SELECT 1 FROM user_profiles up
+      JOIN roles r ON up.role_id = r.id
+      WHERE up.user_id = auth.uid()
+        AND r.name IN ('admin','manager')
     )
   );
 
-ALTER TABLE incidents ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view incidents based on role" ON incidents
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles up 
-      JOIN roles r ON up.role_id = r.id 
-      WHERE up.user_id = auth.uid() 
-      AND (
-        r.name IN ('admin', 'manager') OR
-        (r.name = 'driver' AND driver_id IN (
-          SELECT d.id FROM drivers d
-          JOIN user_profiles up2 ON up2.username = d.phone
-          WHERE up2.user_id = auth.uid()
-        ))
-      )
-    )
-  );
+-- ========================================================
+-- Functions
+-- ========================================================
 
-CREATE POLICY "Users can report incidents" ON incidents
-  FOR INSERT WITH CHECK (
-    auth.uid() IS NOT NULL
-  );
-
-ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view documents based on role" ON documents
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles up 
-      JOIN roles r ON up.role_id = r.id 
-      WHERE up.user_id = auth.uid() 
-      AND r.name IN ('admin', 'manager')
-    )
-  );
-
-ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view expenses based on role" ON expenses
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles up 
-      JOIN roles r ON up.role_id = r.id 
-      WHERE up.user_id = auth.uid() 
-      AND r.name IN ('admin', 'manager')
-    )
-  );
-
--- Enable RLS on remaining tables
-ALTER TABLE shifts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view shifts based on role" ON shifts
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles up 
-      JOIN roles r ON up.role_id = r.id 
-      WHERE up.user_id = auth.uid() 
-      AND (
-        r.name IN ('admin', 'manager') OR
-        (r.name = 'driver' AND driver_id IN (
-          SELECT d.id FROM drivers d
-          JOIN user_profiles up2 ON up2.username = d.phone
-          WHERE up2.user_id = auth.uid()
-        ))
-      )
-    )
-  );
-
-ALTER TABLE deductions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins and managers can manage deductions" ON deductions
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles up 
-      JOIN roles r ON up.role_id = r.id 
-      WHERE up.user_id = auth.uid() 
-      AND r.name IN ('admin', 'manager')
-    )
-  );
-
-ALTER TABLE incident_deductions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins and managers can manage incident deductions" ON incident_deductions
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles up 
-      JOIN roles r ON up.role_id = r.id 
-      WHERE up.user_id = auth.uid() 
-      AND r.name IN ('admin', 'manager')
-    )
-  );
-
--- Enable RLS on roles table
-ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Everyone can view roles" ON roles FOR SELECT USING (true);
-
--- Functions for payout calculation
+-- Payout calculation function
 CREATE OR REPLACE FUNCTION calculate_payout(revenue NUMERIC)
 RETURNS NUMERIC AS $$
 BEGIN
