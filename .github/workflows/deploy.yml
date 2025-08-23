@@ -7,11 +7,62 @@ on:
     branches: [ main ]
 
 jobs:
+  # Job for pull requests - no secrets access
+  test-and-build-pr:
+    runs-on: ubuntu-latest
+    name: Test and Build (PR)
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build application (PR)
+        run: npm run build
+
+  # Job for main branch pushes - with secrets access
+  test-and-build-main:
+    runs-on: ubuntu-latest
+    name: Test and Build (Main)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build application (Main)
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
   deploy-vercel:
     runs-on: ubuntu-latest
     name: Deploy to Vercel
+    needs: test-and-build-main
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: false
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -39,9 +90,12 @@ jobs:
   deploy-netlify:
     runs-on: ubuntu-latest
     name: Deploy to Netlify (Backup)
-    if: github.ref == 'refs/heads/main'
+    needs: test-and-build-main
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: false
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
