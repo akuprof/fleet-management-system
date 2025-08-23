@@ -85,3 +85,7 @@ jspm_packages/
 
 # Supabase
 .env.local
+
+# Exclude separate project directories that were causing submodule issues
+pls/
+pls-travels/
