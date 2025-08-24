@@ -41,12 +41,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
+          <div className="mx-auto mb-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-blue-100">
             <svg
-              className="h-6 w-6 text-blue-600"
+              className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -59,8 +59,8 @@ export default function LoginPage() {
               />
             </svg>
           </div>
-          <CardTitle className="text-2xl font-bold">PLS Travels</CardTitle>
-          <CardDescription>Fleet Management System</CardDescription>
+          <CardTitle className="text-xl sm:text-2xl font-bold">PLS Travels</CardTitle>
+          <CardDescription className="text-sm sm:text-base">Fleet Management System</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">

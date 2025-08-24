@@ -191,12 +191,12 @@ export default function TripsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
             {isDriver ? 'My Trips' : 'Trip Management'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             {isDriver ? 'View and log your trips' : 'Monitor all fleet trips'}
           </p>
         </div>
@@ -204,12 +204,12 @@ export default function TripsPage() {
         {(isAdmin || isManager || isDriver) && (
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Log Trip
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl mx-4">
               <DialogHeader>
                 <DialogTitle>Log New Trip</DialogTitle>
                 <DialogDescription>Enter the trip details below.</DialogDescription>
@@ -221,7 +221,7 @@ export default function TripsPage() {
                 }}
                 className="space-y-4"
               >
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {(isAdmin || isManager) && (
                     <>
                       <div className="space-y-2">
@@ -292,7 +292,7 @@ export default function TripsPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2">
+                <div className="flex flex-col sm:flex-row justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                     Cancel
                   </Button>
@@ -305,27 +305,27 @@ export default function TripsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="p-4 bg-gray-50 rounded shadow">
-          <p>Total Trips</p>
-          <h2 className="text-xl font-bold">{stats.totalTrips}</h2>
+          <p className="text-sm text-gray-600">Total Trips</p>
+          <h2 className="text-lg sm:text-xl font-bold">{stats.totalTrips}</h2>
         </div>
         <div className="p-4 bg-gray-50 rounded shadow">
-          <p>Today's Trips</p>
-          <h2 className="text-xl font-bold">{stats.todayTrips}</h2>
+          <p className="text-sm text-gray-600">Today's Trips</p>
+          <h2 className="text-lg sm:text-xl font-bold">{stats.todayTrips}</h2>
         </div>
         <div className="p-4 bg-gray-50 rounded shadow">
-          <p>Total Revenue</p>
-          <h2 className="text-xl font-bold">₹{stats.totalRevenue.toFixed(2)}</h2>
+          <p className="text-sm text-gray-600">Total Revenue</p>
+          <h2 className="text-lg sm:text-xl font-bold">₹{stats.totalRevenue.toFixed(2)}</h2>
         </div>
         <div className="p-4 bg-gray-50 rounded shadow">
-          <p>Today's Revenue</p>
-          <h2 className="text-xl font-bold">₹{stats.todayRevenue.toFixed(2)}</h2>
+          <p className="text-sm text-gray-600">Today's Revenue</p>
+          <h2 className="text-lg sm:text-xl font-bold">₹{stats.todayRevenue.toFixed(2)}</h2>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 items-center">
+      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
@@ -335,18 +335,18 @@ export default function TripsPage() {
             className="pl-10"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative">
             <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               type="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="pl-10 w-40"
+              className="pl-10 w-full sm:w-40"
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
@@ -365,22 +365,22 @@ export default function TripsPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Trip Details
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                   Driver
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                   Vehicle
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
                   Timing
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                   Revenue
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
               </tr>
@@ -388,39 +388,45 @@ export default function TripsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredTrips.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-3 sm:px-6 py-12 text-center text-gray-500">
                     {searchTerm || dateFilter || statusFilter ? 'No trips match your filters' : 'No trips found'}
                   </td>
                 </tr>
               ) : (
                 filteredTrips.map((trip) => (
                   <tr key={trip.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-4">
                       <div className="space-y-1">
                         <div className="text-sm font-medium text-gray-900">
                           {trip.pickup_location} → {trip.drop_location}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-xs sm:text-sm text-gray-500">
                           {trip.platform_trip_id && `ID: ${trip.platform_trip_id}`}
                         </div>
                         {trip.distance_km && (
-                          <div className="text-sm text-gray-500">
+                          <div className="text-xs sm:text-sm text-gray-500">
                             Distance: {trip.distance_km} km
                           </div>
                         )}
+                        {/* Mobile driver info */}
+                        <div className="sm:hidden text-xs text-gray-500 mt-2">
+                          <div className="font-medium">Driver: {trip.driver?.name}</div>
+                          <div>Vehicle: {trip.vehicle?.registration_number}</div>
+                          <div>Fare: ₹{trip.fare_amount?.toFixed(2)}</div>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-4 hidden sm:table-cell">
                       <div className="text-sm text-gray-900">{trip.driver?.name}</div>
                       <div className="text-sm text-gray-500">{trip.driver?.phone}</div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-4 hidden lg:table-cell">
                       <div className="text-sm text-gray-900">{trip.vehicle?.registration_number}</div>
                       <div className="text-sm text-gray-500">
                         {trip.vehicle?.brand} {trip.vehicle?.model}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-4 hidden xl:table-cell">
                       <div className="text-sm text-gray-900">
                         {formatDate(trip.trip_start_time)}
                       </div>
@@ -428,7 +434,7 @@ export default function TripsPage() {
                         to {formatDate(trip.trip_end_time)}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-4 hidden sm:table-cell">
                       <div className="text-sm font-medium text-gray-900">
                         ₹{trip.fare_amount?.toFixed(2)}
                       </div>
@@ -436,7 +442,7 @@ export default function TripsPage() {
                         Net: ₹{trip.net_revenue?.toFixed(2)}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-4">
                       {getStatusBadge(trip.trip_status)}
                     </td>
                   </tr>

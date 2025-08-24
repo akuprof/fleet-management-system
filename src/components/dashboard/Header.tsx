@@ -42,25 +42,25 @@ export function Header({ user, profile }: HeaderProps) {
     <div className="bg-white shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between items-center">
-          <div className="flex items-center">
-            <h1 className="text-2xl font-semibold text-gray-900">
+          <div className="flex items-center min-w-0 flex-1">
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 truncate">
               Welcome back, {profile.username || user.email?.split('@')[0]}!
             </h1>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {/* Notifications */}
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+            <Button variant="ghost" size="sm" className="relative p-2 sm:p-3">
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="absolute -top-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                 3
               </span>
             </Button>
 
             {/* User Profile */}
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-medium text-gray-900 truncate">
                   {profile.username || user.email?.split('@')[0]}
                 </p>
                 <Badge
@@ -70,9 +70,9 @@ export function Header({ user, profile }: HeaderProps) {
                   {profile.role?.name || 'No Role'}
                 </Badge>
               </div>
-              <Avatar>
+              <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                 <AvatarImage src={user.user_metadata?.avatar_url} />
-                <AvatarFallback>
+                <AvatarFallback className="text-xs sm:text-sm">
                   {getInitials(profile.username || user.email?.split('@')[0] || 'U')}
                 </AvatarFallback>
               </Avatar>

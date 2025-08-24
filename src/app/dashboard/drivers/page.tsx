@@ -116,21 +116,21 @@ export default function DriversPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Driver Management</h1>
-          <p className="text-gray-600">Manage your fleet drivers and their information</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Driver Management</h1>
+          <p className="text-sm sm:text-base text-gray-600">Manage your fleet drivers and their information</p>
         </div>
 
         {(isAdmin || isManager) && (
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Driver
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl mx-4">
               <DialogHeader>
                 <DialogTitle>Add New Driver</DialogTitle>
                 <DialogDescription>Enter the driver details below.</DialogDescription>
@@ -142,7 +142,7 @@ export default function DriversPage() {
                 }}
                 className="space-y-4"
               >
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name *</Label>
                     <Input id="name" name="name" required />
@@ -159,7 +159,7 @@ export default function DriversPage() {
                     <Label htmlFor="license_number">License Number *</Label>
                     <Input id="license_number" name="license_number" required />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 sm:col-span-2">
                     <Label htmlFor="status">Status</Label>
                     <Select name="status" defaultValue="active">
                       <SelectTrigger>
@@ -174,7 +174,7 @@ export default function DriversPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2">
+                <div className="flex flex-col sm:flex-row justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                     Cancel
                   </Button>
@@ -187,23 +187,23 @@ export default function DriversPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="p-4 bg-gray-50 rounded shadow">
-          <p>Total Drivers</p>
-          <h2 className="text-xl font-bold">{stats.totalDrivers}</h2>
+          <p className="text-sm text-gray-600">Total Drivers</p>
+          <h2 className="text-lg sm:text-xl font-bold">{stats.totalDrivers}</h2>
         </div>
         <div className="p-4 bg-gray-50 rounded shadow">
-          <p>Active Drivers</p>
-          <h2 className="text-xl font-bold">{stats.activeDrivers}</h2>
+          <p className="text-sm text-gray-600">Active Drivers</p>
+          <h2 className="text-lg sm:text-xl font-bold">{stats.activeDrivers}</h2>
         </div>
-        <div className="p-4 bg-gray-50 rounded shadow">
-          <p>Inactive Drivers</p>
-          <h2 className="text-xl font-bold">{stats.inactiveDrivers}</h2>
+        <div className="p-4 bg-gray-50 rounded shadow sm:col-span-2 lg:col-span-1">
+          <p className="text-sm text-gray-600">Inactive Drivers</p>
+          <h2 className="text-lg sm:text-xl font-bold">{stats.inactiveDrivers}</h2>
         </div>
       </div>
 
       {/* Search */}
-      <div className="flex gap-4 items-center">
+      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
@@ -221,16 +221,16 @@ export default function DriversPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Driver Info
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                   Contact
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                   License
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
               </tr>
@@ -238,27 +238,40 @@ export default function DriversPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredDrivers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={4} className="px-3 sm:px-6 py-12 text-center text-gray-500">
                     {searchTerm ? 'No drivers match your search' : 'No drivers found'}
                   </td>
                 </tr>
               ) : (
                 filteredDrivers.map((driver) => (
                   <tr key={driver.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-4">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                            <User className="h-5 w-5 text-gray-600" />
+                        <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10">
+                          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                            <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
                           </div>
                         </div>
-                        <div className="ml-4">
+                        <div className="ml-3 sm:ml-4">
                           <div className="text-sm font-medium text-gray-900">{driver.name}</div>
-                          <div className="text-sm text-gray-500">ID: {driver.id}</div>
+                          <div className="text-xs sm:text-sm text-gray-500">ID: {driver.id}</div>
+                          {/* Mobile contact info */}
+                          <div className="sm:hidden text-xs text-gray-500 mt-1">
+                            <div className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {driver.phone}
+                            </div>
+                            {driver.email && (
+                              <div className="flex items-center gap-1">
+                                <Mail className="h-3 w-3" />
+                                {driver.email}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-4 hidden sm:table-cell">
                       <div className="space-y-1">
                         <div className="text-sm text-gray-900 flex items-center gap-1">
                           <Phone className="h-3 w-3" />
@@ -272,10 +285,10 @@ export default function DriversPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-4 hidden lg:table-cell">
                       <div className="text-sm text-gray-900">{driver.license_number}</div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-4">
                       {getStatusBadge(driver.status)}
                     </td>
                   </tr>
