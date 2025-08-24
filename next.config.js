@@ -4,10 +4,14 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
-  // Disable static optimization to prevent build-time Supabase client creation
-  experimental: {
-    isrMemoryCacheSize: 0,
-  }
+  // Configure path aliases
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname, 'src'),
+    };
+    return config;
+  },
 };
 
 module.exports = nextConfig;
